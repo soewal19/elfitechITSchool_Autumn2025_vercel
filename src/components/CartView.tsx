@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShoppingBag } from 'lucide-react';
-import { CartLoadingSpinner, SuspenseWrapper } from './LoadingSpinner';
+import { CartLoadingSpinner } from './LoadingSpinner';
+import { SuspenseWrapper } from './SuspenseWrapper';
 import { CartItem } from './CartItem';
 import { OrderForm } from './OrderForm';
 import { OrderSuccess } from './OrderSuccess';

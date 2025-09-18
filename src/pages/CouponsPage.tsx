@@ -1,6 +1,7 @@
 import React from 'react';
 import { Ticket, Gift } from 'lucide-react';
-import { LoadingSpinner, SuspenseWrapper } from '../components/LoadingSpinner';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { SuspenseWrapper } from '../components/SuspenseWrapper';
 import { CouponCard } from '../components/CouponCard';
 import { useApp } from '../contexts/AppContext';
 

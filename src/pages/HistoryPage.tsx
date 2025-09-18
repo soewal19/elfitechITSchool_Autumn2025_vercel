@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { History, Search, Package, Calendar, DollarSign, MapPin, Phone, Mail, Navigation, Tag } from 'lucide-react';
-import { LoadingSpinner, SuspenseWrapper } from '../components/LoadingSpinner';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { SuspenseWrapper } from '../components/SuspenseWrapper';
 import { useApp } from '../contexts/AppContext';
 
 export function HistoryPage() {

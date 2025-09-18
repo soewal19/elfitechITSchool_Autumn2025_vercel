@@ -1,6 +1,7 @@
 import React from 'react';
 import { Heart, ShoppingBag } from 'lucide-react';
-import { FlowerLoadingSpinner, SuspenseWrapper } from '../components/LoadingSpinner';
+import { FlowerLoadingSpinner } from '../components/LoadingSpinner';
+import { SuspenseWrapper } from '../components/SuspenseWrapper';
 import { FlowerCard } from '../components/FlowerCard';
 import { useApp } from '../contexts/AppContext';
 
