@@ -6,7 +6,7 @@ A modern, responsive web application for ordering flower delivery services. Buil
 
 ## 🚀 Live Demo
 
-
+https://elfitech-it-school-autumn2025-verce-one.vercel.app/
 
 ## ✨ Features
 
@@ -362,3 +362,33 @@ For support, email support@flowerdelivery.com or create an issue in the GitHub r
 ---
 
 Made with ❤️ for flower lovers everywhere 🌸
+
+## Changelog (Backend + Data + UI)
+
+- Added a lightweight backend server (Node.js, Express, SQLite) with Swagger UI for API exploration.
+- New API endpoints:
+  - GET /api/shops — list shops
+  - GET /api/flowers?shop_id=... — list flowers (filter by shop optionally)
+  - PATCH /api/flowers/:id/favorite — toggle a flower's favorite state
+  - GET /api/coupons — list coupons
+  - GET /api/orders — list orders with items
+  - POST /api/orders — create an order
+- Database schema aligned to frontend types:
+  - shops: added category
+  - flowers: added image, description, date_added
+  - coupons: added name, is_active, expiry_date, min_order_amount
+- Database seeding: on first run, tables are auto-created and seeded with the same dataset as the frontend mock data.
+- Frontend hybrid data source:
+  - App loads mock data immediately for a fast first paint.
+  - Then fetches real data from the API and updates UI when available (graceful fallback if API is down).
+  - Favorites are merged with localStorage to preserve user preferences.
+- Favorites sync: clicking the heart performs an optimistic UI update and a PATCH to the API to persist the change.
+- Image fallback behavior: if a flower has no image or the image fails to load, the card displays a neutral placeholder with the text "no image".
+- Configuration:
+  - New env var VITE_API_URL to customize API base URL (defaults to http://localhost:4000).
+- Scripts:
+  - Added npm run server to start the API server (node server/index.js).
+- Setup notes for backend:
+  - Install server deps: npm i express cors better-sqlite3 swagger-ui-express
+  - Start: npm run server
+  - Swagger: http://localhost:4000/api-docs

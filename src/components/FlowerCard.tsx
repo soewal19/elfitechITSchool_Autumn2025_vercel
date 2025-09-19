@@ -10,13 +10,24 @@ interface FlowerCardProps {
 export function FlowerCard({ flower }: FlowerCardProps) {
   const { dispatch, shops } = useApp();
   const shop = shops.find(s => s.id === flower.shopId);
+  const [imgError, setImgError] = React.useState(false);
 
   const handleAddToCart = () => {
     dispatch({ type: 'ADD_TO_CART', payload: flower });
   };
 
-  const handleToggleFavorite = () => {
+  const handleToggleFavorite = async () => {
+    // Optimistic update
     dispatch({ type: 'TOGGLE_FAVORITE', payload: flower.id });
+    try {
+      const API_BASE = (import.meta as any)?.env?.VITE_API_URL || 'http://localhost:4000';
+      await fetch(`${API_BASE}/api/flowers/${flower.id}/favorite`, { method: 'PATCH' });
+    } catch (e) {
+      // В случае ошибки серверного запроса оставляем локальное состояние,
+      // так как избранное также хранится в localStorage.
+      // Здесь можно реализовать откат или уведомление при необходимости.
+      console.warn('Failed to sync favorite with API', e);
+    }
   };
 
   return (
@@ -25,12 +36,19 @@ export function FlowerCard({ flower }: FlowerCardProps) {
       data-testid="flower-card"
     >
       <div className="relative">
-        <img
-          src={flower.image}
-          alt={flower.name}
-          className="w-full h-48 object-cover"
-          loading="lazy"
-        />
+        {(!flower.image || imgError) ? (
+          <div className="w-full h-48 flex items-center justify-center bg-gray-100 text-gray-400 uppercase tracking-wide">
+            no image
+          </div>
+        ) : (
+          <img
+            src={flower.image}
+            alt={flower.name}
+            className="w-full h-48 object-cover"
+            loading="lazy"
+            onError={() => setImgError(true)}
+          />
+        )}
         <button
           onClick={handleToggleFavorite}
           data-testid="favorite-button"

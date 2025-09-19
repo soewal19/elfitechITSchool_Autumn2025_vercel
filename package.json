@@ -14,8 +14,11 @@
     "test:e2e": "cypress run --spec 'cypress/e2e/**/*'",
     "test:mobile": "cypress run --spec 'cypress/e2e/mobile-responsive.cy.ts'",
     "test:performance": "cypress run --spec 'cypress/e2e/performance.cy.ts'",
-    "test:smoke": "cypress run --spec 'cypress/e2e/flower-shop.cy.ts' --headed"
+    "test:smoke": "cypress run --spec 'cypress/e2e/flower-shop.cy.ts' --headed",
+    "server": "node server/index.js"
   },
+  "optionalDependencies": {},
+  "overrides": {},
   "dependencies": {
     "@cypress/react": "^9.0.1",
     "@cypress/webpack-dev-server": "^5.1.1",

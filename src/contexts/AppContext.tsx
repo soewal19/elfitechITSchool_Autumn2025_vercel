@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { Flower, CartItem, CustomerInfo, Order, SortOption, Coupon } from '../types';
-import { flowers as initialFlowers, shops } from '../data/mockData';
-import { coupons } from '../data/coupons';
+import { Flower, CartItem, CustomerInfo, Order, SortOption, Coupon, Shop } from '../types';
+import { flowers as initialFlowers, shops as mockShops } from '../data/mockData';
+import { coupons as mockCoupons } from '../data/coupons';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
 interface AppState {
@@ -11,8 +11,6 @@ interface AppState {
   sortBy: SortOption;
   orders: Order[];
   appliedCoupons: Coupon[];
-  currentPage: number;
-  itemsPerPage: number;
   currentPage: number;
   itemsPerPage: number;
   showAnalytics: boolean;
@@ -33,8 +31,6 @@ type AppAction =
   | { type: 'REMOVE_COUPON'; payload: string }
   | { type: 'SET_CURRENT_PAGE'; payload: number }
   | { type: 'SET_ITEMS_PER_PAGE'; payload: number }
-  | { type: 'SET_CURRENT_PAGE'; payload: number }
-  | { type: 'SET_ITEMS_PER_PAGE'; payload: number }
   | { type: 'TOGGLE_ANALYTICS' };
 
 const initialState: AppState = {
@@ -44,8 +40,6 @@ const initialState: AppState = {
   sortBy: 'name',
   orders: [],
   appliedCoupons: [],
-  currentPage: 1,
-  itemsPerPage: 12,
   currentPage: 1,
   itemsPerPage: 12,
   showAnalytics: false,
@@ -147,12 +141,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'TOGGLE_ANALYTICS':
       return { ...state, showAnalytics: !state.showAnalytics };
     
-    case 'SET_CURRENT_PAGE':
-      return { ...state, currentPage: action.payload };
-    
-    case 'SET_ITEMS_PER_PAGE':
-      return { ...state, itemsPerPage: action.payload, currentPage: 1 };
-    
     default:
       return state;
   }
@@ -161,8 +149,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
 interface AppContextType {
   state: AppState;
   dispatch: React.Dispatch<AppAction>;
-  shops: typeof shops;
-  coupons: typeof coupons;
+  shops: Shop[];
+  coupons: Coupon[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -171,6 +159,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [storedCart, setStoredCart] = useLocalStorage<CartItem[]>('flower-cart', []);
   const [storedFlowers, setStoredFlowers] = useLocalStorage<Flower[]>('flower-favorites', initialFlowers);
+  const [shops, setShops] = React.useState<Shop[]>(mockShops);
+  const [coupons, setCoupons] = React.useState<Coupon[]>(mockCoupons);
 
   useEffect(() => {
     dispatch({ type: 'LOAD_CART', payload: storedCart });
@@ -184,6 +174,64 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setStoredFlowers(state.flowers);
   }, [state.flowers, setStoredFlowers]);
+
+  // Load data from API with graceful fallback to mocks/localStorage
+  useEffect(() => {
+    const API_BASE = (import.meta as any)?.env?.VITE_API_URL || 'http://localhost:4000';
+
+    const fetchAll = async () => {
+      try {
+        const [shopsRes, flowersRes, couponsRes] = await Promise.all([
+          fetch(`${API_BASE}/api/shops`),
+          fetch(`${API_BASE}/api/flowers`),
+          fetch(`${API_BASE}/api/coupons`),
+        ]);
+
+        if (shopsRes.ok) {
+          const shopsData: Shop[] = await shopsRes.json();
+          setShops(shopsData);
+        }
+
+        if (flowersRes.ok) {
+          const apiFlowers: any[] = await flowersRes.json();
+          // merge favorites from local storage if present
+          const favMap = new Map(storedFlowers.map(f => [f.id, f.isFavorite]));
+          const mapped: Flower[] = apiFlowers.map(f => ({
+            id: String(f.id),
+            name: f.name,
+            price: Number(f.price),
+            image: f.image,
+            description: f.description,
+            shopId: String(f.shopId ?? f.shop_id),
+            isFavorite: favMap.has(String(f.id)) ? !!favMap.get(String(f.id)) : !!(f.isFavorite ?? f.is_favorite),
+            dateAdded: new Date(f.dateAdded ?? f.date_added ?? Date.now()),
+          }));
+          dispatch({ type: 'LOAD_FLOWERS', payload: mapped });
+        }
+
+        if (couponsRes.ok) {
+          const apiCoupons: any[] = await couponsRes.json();
+          const mappedCoupons: Coupon[] = apiCoupons.map(c => ({
+            id: String(c.id),
+            code: c.code,
+            name: c.name ?? c.code,
+            description: c.description ?? '',
+            discount: Number(c.discount ?? 0),
+            isActive: !!(c.isActive ?? c.is_active ?? true),
+            expiryDate: c.expiryDate || c.expiry_date ? new Date(c.expiryDate ?? c.expiry_date) : new Date(),
+            minOrderAmount: c.minOrderAmount ?? c.min_order_amount ?? undefined,
+          }));
+          setCoupons(mappedCoupons);
+        }
+      } catch (e) {
+        // ignore and keep mock/local values
+        console.warn('API fetch failed, using mock/local data', e);
+      }
+    };
+
+    fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AppContext.Provider value={{ state, dispatch, shops, coupons }}>
